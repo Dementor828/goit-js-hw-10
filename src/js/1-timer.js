@@ -5,7 +5,8 @@ import "izitoast/dist/css/iziToast.min.css";
 
 const datetimePicker = document.getElementById("datetime-picker");
 const startButton = document.querySelector(".timer-button");
-let date = Date.now()
+let date = null;
+let intervalId = null;
 iziToast.settings({
     timeout: 10000,
     resetOnHover: true,
@@ -24,7 +25,7 @@ const options = {
         if(!selectedDates[0]) return;
 
         const dateObject = new Date(selectedDates[0]);
-        if (dateObject < Date.now()) {
+        if (dateObject <= Date.now()) {
             iziToast.show({message: 'Please choose a date in the future', color: 'red'})
             startButton.disabled = true;
             return;
@@ -35,14 +36,15 @@ const options = {
 };
 flatpickr(datetimePicker, options);
 
-startButton.addEventListener("click", (event) => {
+startButton.addEventListener("click", () => {
     if(!date) return;
-    if (date < Date.now()) {
+    if (date <= Date.now()) {
         iziToast.show({message: 'Please choose a date in the future', color: 'red'})
         startButton.disabled = true;
         return;
     }
-    startTimer(date)
+    datetimePicker.disabled = true;
+    startTimer(date);
     startButton.disabled = true;
 });
 
@@ -66,24 +68,39 @@ function convertMs(ms) {
 }
 
 function startTimer(dateObject) {
-    setInterval(() => {
+    if (intervalId) {
+        clearInterval(intervalId);
+    }
 
+    intervalId = setInterval(() => {
         const timeLeft = dateObject - Date.now();
 
-        const { days, hours, minutes, seconds } = convertMs(timeLeft);
+        if (timeLeft <= 0) {
+            clearInterval(intervalId);
+            intervalId = null;
+            updateTimerValues(0, 0, 0, 0);
+            datetimePicker.disabled = false;
+            startButton.disabled = true;
+            return;
+        }
 
-        const allValues = document.querySelectorAll(".value");
-        allValues.forEach((value) => {
-            if (value.dataset.days !== undefined) { value.innerHTML = addLeadingZero(days.toString()); }
-            if (value.dataset.hours !== undefined) { value.innerHTML = addLeadingZero(hours.toString()); }
-            if (value.dataset.minutes !== undefined) { value.innerHTML = addLeadingZero(minutes.toString()); }
-            if (value.dataset.seconds !== undefined) { value.innerHTML = addLeadingZero(seconds.toString()); }
-        });
+        const { days, hours, minutes, seconds } = convertMs(timeLeft);
+        updateTimerValues(days, hours, minutes, seconds);
     }, 1000);
 }
 
 function addLeadingZero(value) {
     return value.padStart(2, "0")
+}
+
+function updateTimerValues(days, hours, minutes, seconds) {
+    const allValues = document.querySelectorAll(".value");
+    allValues.forEach((value) => {
+        if (value.dataset.days !== undefined) { value.innerHTML = addLeadingZero(days.toString()); }
+        if (value.dataset.hours !== undefined) { value.innerHTML = addLeadingZero(hours.toString()); }
+        if (value.dataset.minutes !== undefined) { value.innerHTML = addLeadingZero(minutes.toString()); }
+        if (value.dataset.seconds !== undefined) { value.innerHTML = addLeadingZero(seconds.toString()); }
+    });
 }
 
 
