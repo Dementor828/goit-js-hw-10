@@ -7,6 +7,7 @@ const datetimePicker = document.getElementById("datetime-picker");
 const startButton = document.querySelector(".timer-button");
 let date = null;
 let intervalId = null;
+startButton.disabled = true;
 iziToast.settings({
     timeout: 10000,
     resetOnHover: true,
@@ -19,7 +20,7 @@ iziToast.settings({
 const options = {
     enableTime: true,
     time_24hr: true,
-    defaultDate: new Date(date),
+    defaultDate: new Date(),
     minuteIncrement: 1,
     onClose(selectedDates) {
         if(!selectedDates[0]) return;
